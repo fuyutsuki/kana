@@ -31,7 +31,6 @@ class main extends PluginBase implements Listener
 		$bool = $this->isChange($ev->getPlayer());
 		if ($bool) {
 			$oldMessage = $ev->getMessage();
-			$oldMessage = str_replace(' ', '+', $oldMessage);
 			Server::getInstance()->getAsyncPool()->submitTask(new TranslateEnglish('<'.$ev->getPlayer()->getName().'>',$oldMessage));
 			$ev->setCancelled();
 		}
