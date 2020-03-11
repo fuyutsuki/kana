@@ -11,6 +11,10 @@ use Ree\kana\TranslateException;
 
 class TranslateTask extends AsyncTask
 {
+
+	/** @var string */
+	private const BAD_REQUEST_PREFIX = '[Translate Bad Request] ';
+
 	/**
 	 * @var string
 	 */
@@ -37,10 +41,10 @@ class TranslateTask extends AsyncTask
 			$en = Translate::request(str_replace(' ', '', $this->text), Translate::LANG_JA, Translate::LANG_EN);
 			$result = Translate::request($en, Translate::LANG_EN, Translate::LANG_JA);
 			if (mb_strlen($result) === 1551) {
-				$result = '[Translate Bad Request] '.$this->text;
+				$result = self::BAD_REQUEST_PREFIX.$this->text;
 			}
 		} catch (TranslateException $e) {
-			$result = '[Translate Bad Request] '.$this->text;
+			$result = self::BAD_REQUEST_PREFIX.$this->text;
 		}
 		$this->setResult($result);
 	}
