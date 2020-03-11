@@ -7,6 +7,7 @@ use pocketmine\scheduler\AsyncTask;
 use pocketmine\Server;
 use pocketmine\utils\TextFormat;
 use Ree\kana\Translate;
+use Ree\kana\TranslateException;
 
 class TranslateTask extends AsyncTask
 {
@@ -31,9 +32,14 @@ class TranslateTask extends AsyncTask
 	 */
 	public function onRun()
 	{
-		$en = Translate::request(str_replace(' ', '', $this->text), Translate::LANG_JA, Translate::LANG_EN);
-		$result = Translate::request($en, Translate::LANG_EN, Translate::LANG_JA);
-		if (mb_strlen($result) === 1551) {
+		try
+		{
+			$en = Translate::request(str_replace(' ', '', $this->text), Translate::LANG_JA, Translate::LANG_EN);
+			$result = Translate::request($en, Translate::LANG_EN, Translate::LANG_JA);
+			if (mb_strlen($result) === 1551) {
+				$result = '[Translate Bad Request] '.$this->text;
+			}
+		} catch (TranslateException $e) {
 			$result = '[Translate Bad Request] '.$this->text;
 		}
 		$this->setResult($result);
