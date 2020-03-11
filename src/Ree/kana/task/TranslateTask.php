@@ -38,8 +38,8 @@ class TranslateTask extends AsyncTask
 	{
 		try
 		{
-			$en = Translate::request(str_replace(' ', '', $this->text), Translate::LANG_JA, Translate::LANG_EN);
-			$result = Translate::request($en, Translate::LANG_EN, Translate::LANG_JA);
+			$en = Translate::execute(str_replace(' ', '', $this->text), Translate::LANG_JA, Translate::LANG_EN);
+			$result = Translate::execute($en, Translate::LANG_EN, Translate::LANG_JA);
 			if (mb_strlen($result) === 1551) {
 				$result = self::BAD_REQUEST_PREFIX.$this->text;
 			}
