@@ -40,6 +40,7 @@ class main extends PluginBase implements Listener
 		if ($command == "kana") {
 			if (!$sender instanceof Player) {
 				$sender->sendMessage("§6>> §rコンソールでは使用不可なコマンドです");
+				return false;
 			}
 			$bool = $this->isChange($sender);
 			if (!isset($args[0])) {
