@@ -2,15 +2,14 @@
 
 namespace Ree\kana;
 
+use pocketmine\Player;
+use pocketmine\Server;
+use pocketmine\event\Listener;
 use pocketmine\command\Command;
+use Ree\kana\task\TranslateTask;
+use pocketmine\plugin\PluginBase;
 use pocketmine\command\CommandSender;
 use pocketmine\event\player\PlayerChatEvent;
-use pocketmine\Player;
-use pocketmine\plugin\PluginBase;
-use pocketmine\event\Listener;
-use pocketmine\Server;
-use pocketmine\utils\TextFormat;
-use Ree\kana\task\TranslateEnglish;
 
 class main extends PluginBase implements Listener
 {
@@ -31,7 +30,7 @@ class main extends PluginBase implements Listener
 		$bool = $this->isChange($ev->getPlayer());
 		if ($bool) {
 			$oldMessage = $ev->getMessage();
-			Server::getInstance()->getAsyncPool()->submitTask(new TranslateEnglish('<'.$ev->getPlayer()->getDisplayName().'>',$oldMessage));
+			Server::getInstance()->getAsyncPool()->submitTask(new TranslateTask('<'.$ev->getPlayer()->getDisplayName().'>',$oldMessage));
 			$ev->setCancelled();
 		}
 	}

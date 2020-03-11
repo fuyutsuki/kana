@@ -1,0 +1,50 @@
+<?php
+
+namespace Ree\kana\task;
+
+
+use pocketmine\scheduler\AsyncTask;
+use pocketmine\Server;
+use pocketmine\utils\TextFormat;
+use Ree\kana\Translate;
+
+class TranslateTask extends AsyncTask
+{
+	/**
+	 * @var string
+	 */
+	private $name;
+
+	/**
+	 * @var string
+	 */
+	private $text;
+
+	public function __construct(string $name, string $text)
+	{
+		$this->name = $name;
+		$this->text = $text;
+	}
+
+	/**
+	 * @inheritDoc
+	 */
+	public function onRun()
+	{
+		$en = Translate::request(str_replace(' ', '', $this->text), Translate::LANG_JA, Translate::LANG_EN);
+		$result = Translate::request($en, Translate::LANG_EN, Translate::LANG_JA);
+		if (mb_strlen($result) === 1551) {
+			$result = '[Translate Bad Request] '.$this->text;
+		}
+		$this->setResult($result);
+	}
+
+	/**
+	 * @param Server $server
+	 */
+	public function onCompletion(Server $server)
+	{
+		$server->broadcastMessage($this->name . ' ' . $this->oldText . TextFormat::GOLD. '   <' . $this->getResult() . '>');
+		parent::onCompletion($server);
+	}
+}
