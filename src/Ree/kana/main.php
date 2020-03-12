@@ -1,89 +1,58 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Ree\kana;
 
-use pocketmine\Player;
-use pocketmine\Server;
+use pocketmine\event\player\PlayerQuitEvent;
+use pocketmine\event\server\DataPacketReceiveEvent;
+use pocketmine\network\mcpe\protocol\LoginPacket;
 use pocketmine\event\Listener;
-use pocketmine\command\Command;
-use Ree\kana\task\TranslateTask;
+use pocketmine\Player;
 use pocketmine\plugin\PluginBase;
-use pocketmine\command\CommandSender;
 use pocketmine\event\player\PlayerChatEvent;
 
-class main extends PluginBase implements Listener
-{
+/**
+ * Class Main
+ * @package Ree\kana
+ */
+class Main extends PluginBase implements Listener {
 
-	public function onEnable()
-	{
-		$this->getLogger()->info("このプラグインは開発段階なため,動作は保証できません");
-		$this->getLogger()->info("バグ報告はこちらへ");
-		$this->getLogger()->info("https://github.com/Ree-jp/kana/issues");
-		$this->getLogger()->warning('----------------------------------------');
-		$this->getLogger()->info("This plugin has been converted using google's translation api, so the meaning may be different from the sentence before conversion");
-		$this->getLogger()->warning('----------------------------------------');
+    private const DEVICE_WINDOWS = 7;
+
+    private $translateFlag = [];
+
+    private function hasTranslateFlag(Player $player): bool {
+        return isset($this->translateFlag[$player->getLowerCaseName()]);
+    }
+
+	public function onEnable() {
 		$this->getServer()->getPluginManager()->registerEvents($this, $this);
 	}
 
-	public function onChat(PlayerChatEvent $ev)
-	{
-		$bool = $this->isChange($ev->getPlayer());
-		if ($bool) {
-			$oldMessage = $ev->getMessage();
-			Server::getInstance()->getAsyncPool()->submitTask(new TranslateTask('<'.$ev->getPlayer()->getDisplayName().'>',$oldMessage));
+	public function onLogin(DataPacketReceiveEvent $ev) {
+	    $pk = $ev->getPacket();
+	    if ($pk->pid() === LoginPacket::NETWORK_ID) {
+	        /** @var LoginPacket $pk */
+	        $deviceOS = $pk->clientData["DeviceOS"];
+	        if ($deviceOS === self::DEVICE_WINDOWS) {
+	            $this->translateFlag[strtolower($pk->username)] = true;
+            }
+        }
+    }
+
+    public function onQuit(PlayerQuitEvent $ev) {
+        $player = $ev->getPlayer();
+        if ($this->hasTranslateFlag($player)) {
+            unset($this->translateFlag[$player->getLowerCaseName()]);
+        }
+    }
+
+	public function onChat(PlayerChatEvent $ev) {
+        $player = $ev->getPlayer();
+		if ($this->hasTranslateFlag($player)) {
+			$this->getServer()->getAsyncPool()->submitTask(new TranslateTask($player->getDisplayName(), $ev->getMessage(), $player->isOp()));
 			$ev->setCancelled();
-		}
-	}
-
-	public function onCommand(CommandSender $sender, Command $command, string $label, array $args): bool
-	{
-		if ($command == "kana") {
-			if (!$sender instanceof Player) {
-				$sender->sendMessage("§6>> §rコンソールでは使用不可なコマンドです");
-				return false;
-			}
-			$bool = $this->isChange($sender);
-			if (!isset($args[0])) {
-				if ($bool) {
-					$args[0] = "off";
-				} else {
-					$args[0] = "on";
-				}
-			}
-			if ($args[0] === "on") {
-				if ($bool) {
-					$sender->sendMessage("§6>> §rすでにonになっています");
-				} else {
-					$nbt = $sender->namedtag;
-					$nbt->setInt("kanaChange", 1);
-					$sender->sendMessage("§a>> §r自動変換機能を有効にしました");
-				}
-			} elseif ($args[0] == "off") {
-				if ($bool) {
-					$nbt = $sender->namedtag;
-					$nbt->setInt("kanaChange", 0);
-					$sender->sendMessage("§a>> §r自動変換機能を無効にしました");
-				} else {
-					$sender->sendMessage("§6>> §rすでにoffになっています");
-				}
-			} else {
-				return false;
-			}
-		}
-		return false;
-	}
-
-	private function isChange(Player $p): bool
-	{
-		$nbt = $p->namedtag;
-		if ($nbt->offsetExists("kanaChange")) {
-			if ($nbt->getInt("kanaChange")) {
-				return true;
-			} else {
-				return false;
-			}
-		} else {
-			return false;
 		}
 	}
 }
